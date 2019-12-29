@@ -33,8 +33,13 @@ duration_by_translator = (
     .sort_values(ascending=False)
 )
 print(duration_by_translator)
-print(duration_by_translator.median())
+print()
+print('Median:', duration_by_translator.median())
 print(
-    len(duration_by_translator[duration_by_translator > timedelta(hours=6)]),
+    'Translators with more than six hours:',
+    len(duration_by_translator[duration_by_translator > timedelta(hours=6)])
+)
+print(
+    'All translators:',
     len(duration_by_translator),
 )
