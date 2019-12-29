@@ -2,15 +2,15 @@ import re
 from datetime import timedelta
 
 re_lang_time_room = re.compile(
-    u"^\[(?P<language>[a-z-_]{2,5})\] (?P<time>\d\d:\d\d) \+(?P<duration>\d\d:\d\d), (?P<room>.*)$"
+    r"^\[(?P<language>[a-z-_]{2,5})\] (?P<time>\d\d:\d\d) \+(?P<duration>\d\d:\d\d), (?P<room>.*)$"
 )
-re_fahrplan = re.compile(u"^Fahrplan: (?P<url>http.*)$")
+re_fahrplan = re.compile(r"^Fahrplan: (?P<url>http.*)$")
 re_translators = re.compile(
-    u"^→\s*(?P<language>[a-z-_]{2,5})\s*:\s*(?P<translators>.*)$"
+    r"^→\s*(?P<language>[a-z-_]{2,5})\s*:?\s*(\[(?P<partial>.*-.*)\])?\s*(?P<translators>.*)$"
 )
 
 # Parenthetical stuff in shift assignments that should be removed
-re_parentheses = re.compile(u"\s*\(.*\)\s*|\s[-–].*")
+re_parentheses = re.compile(r"\s*\(.*?\)\s*|\s[-–].*")
 
 
 class Error(Exception):
@@ -22,11 +22,22 @@ class ParseError(Error):
         self.message = "Error parsing the following line:\n\t%s" % line
 
 
+def parse_time(timestring):
+    [hours, minutes] = timestring.split(':')
+    return timedelta(hours=int(hours), minutes=int(minutes))
+
+
 class TranslationShift:
-    def __init__(self, name, language, talk=None):
+    def __init__(self, name, language, talk=None, partial=None):
         self.name = name
         self.language = language
         self.talk = talk
+        self.partial = partial
+
+        self.duration = talk.duration
+        if self.partial:
+            [start, end] = self.partial.split('-')
+            self.duration = parse_time(end) - parse_time(start)
 
     def __eq__(self, other):
         return (
@@ -101,12 +112,15 @@ class Talk:
             match = re_translators.match(line)
             if match:
                 language = match.group("language")
-                for name in match.group("translators").split(","):
-                    name = re_parentheses.sub("", name.strip())
+                partial = match.group("partial")
+                # strip out parentheses first
+                translators = re_parentheses.sub("", match.group("translators")).strip()
+                for name in translators.split(","):
+                    name = name.strip()
                     if name == "":
                         continue
                     self.translation_shifts.append(
-                        TranslationShift(name=name, language=language, talk=self)
+                        TranslationShift(name=name, language=language, talk=self, partial=partial)
                     )
                 continue
 
