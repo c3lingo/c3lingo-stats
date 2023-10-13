@@ -8,9 +8,8 @@ Python 3 with Pandas (`pip install pandas`).
 
 ## Usage
 
-Export the pads you want to include as plain text and pass the paths as arguments to `main.py`.
-
 ```sh
+./update-data.sh
 ./main.py pads/*.txt
 ```
 
