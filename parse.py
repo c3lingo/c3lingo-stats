@@ -58,6 +58,7 @@ class TranslationShift:
             "name": self.name,
             "language": self.language,
             "talk": (self.talk.__dict__ if self.talk else None),
+            "duration": self.duration,
         }
 
 
